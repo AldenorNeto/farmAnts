@@ -13,34 +13,54 @@
 
       .ant,
       .anthill,
-      .food {
+      .food,
+      .eye {
         position: absolute;
       }
 
       .ant {
         width: 20px;
         height: 20px;
-        background-color: #e74c3c;
+        background-color: #a8473c;
       }
 
       .anthill {
         width: 40px;
         height: 40px;
         background-color: #2ecc71;
+        border-radius: 20%;
       }
 
       .food {
-        width: 30px;
-        height: 30px;
+        width: 40px;
+        height: 40px;
         background-color: #f39c12;
+        border-radius: 50%;
       }
 
-      .trail {
+      .trail,
+      .trailWithFood {
         width: 10px;
         height: 10px;
         background-color: #3498db;
         position: absolute;
       }
+
+      .trailWithFood {
+        background-color: red;
+      }
+
+      .trajectory {
+        border: 5px white solid;
+      }
+
+      .eye {
+  width: 4px;
+  height: 4px;
+  background-color: black;
+  border-radius: 50%;
+  position: absolute;
+}
     </style>
   </head>
   <body>
