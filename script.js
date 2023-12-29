@@ -1,24 +1,54 @@
 class Ant {
-  constructor(anthill, i) {
+  constructor(anthill) {
     this.element = document.createElement("div");
     this.element.className = "ant";
     this.direction = this.getRandomDirection();
     this.anthill = anthill;
-    this.id = i;
+
     this.withFood = false;
-    this.trail = []; // Array para armazenar trilhas
+    this.sensor1 = false;
+    this.sensor2 = false;
+
+    this.elementsens1 = document.createElement("div");
+    this.elementsens2 = document.createElement("div");
+    this.elementsens1.className = "sensor1";
+    this.elementsens2.className = "sensor2";
+
     this.setPosition();
     document.body.appendChild(this.element);
-    this.createEyes();
+    this.element.appendChild(this.elementsens1);
+    this.element.appendChild(this.elementsens2);
 
     // Change direction every second
     setInterval(() => this.changeDirection({ x: 0.2, y: 0.2 }), 1000);
 
     // Move the ant gradually
-    this.moveInterval = setInterval(() => this.move(), 50);
+    this.moveInterval = setInterval(() => {
+      this.move();
+    }, 50);
 
     // Create a trail every second
-    setInterval(() => this.createTrail(this.withFood), 500);
+    setInterval(() => {
+      this.createTrail(this.withFood);
+    }, 500);
+  }
+
+  rotate(angle) {
+    // Adiciona o ângulo à direção atual
+    const rotatedAngle = Math.atan2(this.direction.y, this.direction.x) + angle;
+
+    // Calcula a nova direção com base no ângulo girado
+    this.direction = {
+      x: Math.cos(rotatedAngle),
+      y: Math.sin(rotatedAngle),
+    };
+
+    // Normaliza a nova direção
+    this.direction = this.normalizeVector(this.direction);
+
+    // Atualiza a rotação da formiga
+    const newAngle = Math.atan2(this.direction.y, this.direction.x);
+    this.element.style.transform = `rotate(${newAngle + 4.8}rad)`;
   }
 
   getRandomDirection() {
@@ -73,54 +103,35 @@ class Ant {
     this.direction = this.normalizeVector(this.direction); // Normaliza o vetor de direção
   }
 
-  createEyes() {
-    // Cria divs para representar os olhos
-    this.leftEye = document.createElement("div");
-    this.rightEye = document.createElement("div");
+  detectCollision(selector) {
+    const getBounding1 = this.elementsens1.getBoundingClientRect();
+    const getBounding2 = this.elementsens2.getBoundingClientRect();
 
-    // Adiciona classes e estilos aos olhos
-    this.leftEye.className = "eye";
-    this.rightEye.className = "eye";
-
-    // Adiciona olhos ao corpo da formiga
-    document.body.appendChild(this.leftEye);
-    document.body.appendChild(this.rightEye);
-  }
-
-  moveEyes() {
-    // Posiciona os olhos perto da formiga
-    const eyeOffsetX = 4;
-    const eyeOffsetY = 8;
-
-    this.leftEye.style.left = `${this.position.x}px`;
-    this.leftEye.style.top = `${this.position.y}px`;
-
-    this.rightEye.style.left = `${this.position.x}px`;
-    this.rightEye.style.top = `${this.position.y}px`;
-  }
-
-  detectCollisionWithEyes(selector) {
-    // Detecta colisão para cada olho separadamente
-    const leftEyeCollision = this.detectCollision(selector, this.leftEye);
-    const rightEyeCollision = this.detectCollision(selector, this.rightEye);
-
-    // Retorna true se houver colisão em qualquer olho
-    return leftEyeCollision || rightEyeCollision;
-  }
-
-  detectCollision(selector, eye) {
-    // Usa elementosFromPoint para verificar colisão no ponto do olho
-    const elementsBelowEye = document.elementsFromPoint(
-      parseInt(eye.style.left) + eye.clientWidth / 2,
-      parseInt(eye.style.top) + eye.clientHeight / 2
+    const elementsBelowSensor1 = document.elementsFromPoint(
+      getBounding1.x,
+      getBounding1.y
     );
 
-    // Verifica se algum dos elementos abaixo do olho corresponde ao seletor
-    return elementsBelowEye.some((element) => element.matches(selector));
+    const elementsBelowSensor2 = document.elementsFromPoint(
+      getBounding2.x,
+      getBounding2.y
+    );
+
+    // Verifica se algum dos elementos abaixo dos sensores corresponde ao seletor
+    const collidedElementeSensor1 = elementsBelowSensor1.find((element) =>
+      element.matches(selector)
+    );
+
+    const collidedElementeSensor2 = elementsBelowSensor2.find((element) =>
+      element.matches(selector)
+    );
+
+    return { sens1: collidedElementeSensor1, sens2: collidedElementeSensor2 };
   }
 
   move() {
     const speed = 2; // Velocidade constante
+
     this.position.x += this.direction.x * speed;
     this.position.y += this.direction.y * speed;
 
@@ -149,33 +160,40 @@ class Ant {
     this.element.style.left = `${this.position.x}px`;
     this.element.style.top = `${this.position.y}px`;
 
-    if (this.id === 1)
-      console.log(this.leftEye.style.left, this.element.style.left);
-
-    this.moveEyes();
-
-    // Verifica colisão com os olhos
-    const anthillBelow = this.detectCollisionWithEyes(".anthill");
-    if (anthillBelow) {
-      // console.log("A formiga está sobreposta ao formigueiro!");
+    // Checks if the ant is superimposed on an anthill
+    const anthillBelow = this.detectCollision(".anthill");
+    if (anthillBelow.sens1 || anthillBelow.sens2) {
+      // console.log('A formiga está sobreposta ao formigueiro!');
     }
 
-    const foodBelow = this.detectCollisionWithEyes(".food");
-    if (foodBelow) {
-      // console.log("A formiga está sobreposta à comida!");
+    // Check if the ant is overlapping the food
+    const foodBelow = this.detectCollision(".food");
+    if (foodBelow.sens1 || foodBelow.sens2) {
+      console.log("A formiga está sobreposta à comida!");
       this.withFood = true;
     }
+    // Checks if the ant is overlapping a trail
+    const trailBelow = this.detectCollision(".pathWithFood");
 
-    const trailBelow = this.detectCollisionWithEyes(".trailWithFood");
-    if (trailBelow) {
-      // console.log("A formiga está sobreposta à trilha!");
+    if (trailBelow.sens1 && trailBelow.sens2) {
+      this.rotate(0.6);
+    } else {
+      if (trailBelow.sens1) {
+        this.rotate(0.35);
+      }
+      if (trailBelow.sens2) {
+        this.rotate(-0.35);
+      }
     }
   }
 
   createTrail(withFood) {
-    // Cria uma nova trilha e a adiciona ao array de trilhas
-    const trail = new Trail(this.position.x, this.position.y, withFood);
-    this.trail.push(trail);
+    // Cria uma nova trilha e a adiciona
+    if (this.lastPosition) {
+      const path = new Path(this.position, this.lastPosition, withFood);
+    }
+
+    this.lastPosition = { ...this.position };
   }
 }
 
@@ -223,31 +241,80 @@ class Food {
   }
 }
 
-class Trail {
-  constructor(x, y, withFood) {
-    const offset = 5; // offset from the trail
-    this.element = document.createElement("div");
-    this.element.className = withFood ? "trailWithFood" : "trail";
-    this.element.style.left = `${x + offset}px`;
-    this.element.style.top = `${y + offset}px`;
-    document.body.appendChild(this.element);
-    if (withFood) {
-      setTimeout(() => this.element.remove(), 25000);
-    } else {
-      setTimeout(() => this.element.remove(), 10000);
+// class Trail {
+//   constructor(x, y, withFood) {
+//     const offset = 5; // offset from the trail
+//     this.element = document.createElement("div");
+//     this.element.className = withFood ? "trailWithFood" : "trail";
+//     this.element.style.left = `${x + offset}px`;
+//     this.element.style.top = `${y + offset}px`;
+//     document.body.appendChild(this.element);
+//     if (withFood) {
+//       setTimeout(() => this.element.remove(), 25000);
+//     } else {
+//       setTimeout(() => this.element.remove(), 10000);
+//     }
+//   }
+// }
+
+class Path {
+  constructor({ x: x1, y: y1 }, { x: x2, y: y2 }, withFood, notExclude) {
+    this.startX = x1;
+    this.startY = y1;
+    this.endX = x2;
+    this.endY = y2;
+    this.pathElement = this.createPathElement(withFood);
+    document.body.appendChild(this.pathElement);
+    if (!notExclude) {
+      if (withFood) {
+        setTimeout(() => this.pathElement.remove(), 25000);
+      } else {
+        setTimeout(() => this.pathElement.remove(), 10000);
+      }
     }
   }
+
+  createPathElement(withFood) {
+    const pathElement = document.createElement("div");
+    pathElement.className = withFood ? "pathWithFood" : "path";
+    const deltaX = this.endX - this.startX;
+    const deltaY = this.endY - this.startY;
+
+    const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    const angle = Math.atan2(deltaY, deltaX);
+
+    pathElement.style.width = `${length}px`;
+    pathElement.style.left = `${this.startX}px`;
+    pathElement.style.top = `${this.startY}px`;
+    pathElement.style.transform = `rotate(${angle}rad)`;
+    return pathElement;
+  }
 }
+
+const mouseCoordinates = document.getElementById("mouse-coordinates");
+mouseCoordinates.innerHTML = `X -, Y -`;
+
+document.addEventListener("mousemove", (event) => {
+  const mouseX = event.clientX;
+  const mouseY = event.clientY;
+
+  mouseCoordinates.innerHTML = `X ${mouseX}, Y ${mouseY}`;
+});
 
 document.addEventListener("DOMContentLoaded", () => {
   // Create an anthill
   const anthill = new Anthill();
 
   // Create 5 ants with the anthill as a dependency
-  for (let i = 0; i < 9; i++) {
-    new Ant(anthill, i);
+  for (let i = 0; i < 35; i++) {
+    new Ant(anthill);
   }
-
   // Create food
-  const food = new Food();
+  // const food = new Food();
+  const path1 = new Path({ x: 100, y: 150 }, { x: 100, y: 600 }, true, true);
+  const path21 = new Path({ x: 100, y: 600 }, { x: 300, y: 700 }, true, true);
+  const path22 = new Path({ x: 300, y: 700 }, { x: 500, y: 600 }, true, true);
+  const path3 = new Path({ x: 500, y: 600 }, { x: 500, y: 150 }, true, true);
+  const path41 = new Path({ x: 300, y: 50 }, { x: 100, y: 150 }, true, true);
+  const path42 = new Path({ x: 500, y: 150 }, { x: 300, y: 50 }, true, true);
 });
