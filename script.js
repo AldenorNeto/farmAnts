@@ -24,7 +24,7 @@ class Ant {
 
     // Move the ant gradually
     this.moveInterval = setInterval(() => {
-      this.move();
+      this.move(this.withFood);
     }, 50);
 
     // Create a trail every second
@@ -129,7 +129,8 @@ class Ant {
     return { sens1: collidedElementeSensor1, sens2: collidedElementeSensor2 };
   }
 
-  move() {
+  move(withFood) {
+    this.withFood = withFood;
     const speed = 2; // Velocidade constante
 
     this.position.x += this.direction.x * speed;
@@ -162,18 +163,29 @@ class Ant {
 
     // Checks if the ant is superimposed on an anthill
     const anthillBelow = this.detectCollision(".anthill");
-    if (anthillBelow.sens1 || anthillBelow.sens2) {
-      // console.log('A formiga está sobreposta ao formigueiro!');
+    if ((anthillBelow.sens1 || anthillBelow.sens2) && this.withFood) {
+      console.log("A formiga está sobreposta ao formigueiro!");
+      this.withFood = false;
+      setTimeout(() => this.rotate(1), 1);
+      setTimeout(() => this.rotate(1), 1);
+      setTimeout(() => this.rotate(1), 1);
+      setTimeout(() => this.rotate(1), 1);
     }
 
     // Check if the ant is overlapping the food
     const foodBelow = this.detectCollision(".food");
-    if (foodBelow.sens1 || foodBelow.sens2) {
+    if ((foodBelow.sens1 || foodBelow.sens2) && !this.withFood) {
       console.log("A formiga está sobreposta à comida!");
       this.withFood = true;
+      setTimeout(() => this.rotate(1), 1);
+      setTimeout(() => this.rotate(1), 1);
+      setTimeout(() => this.rotate(1), 1);
+      setTimeout(() => this.rotate(1), 1);
     }
     // Checks if the ant is overlapping a trail
-    const trailBelow = this.detectCollision(".pathWithFood");
+    const trailBelow = this.detectCollision(
+      withFood ? ".path" : ".pathWithFood"
+    );
 
     if (trailBelow.sens1 && trailBelow.sens2) {
       this.rotate(0.6);
@@ -241,22 +253,6 @@ class Food {
   }
 }
 
-// class Trail {
-//   constructor(x, y, withFood) {
-//     const offset = 5; // offset from the trail
-//     this.element = document.createElement("div");
-//     this.element.className = withFood ? "trailWithFood" : "trail";
-//     this.element.style.left = `${x + offset}px`;
-//     this.element.style.top = `${y + offset}px`;
-//     document.body.appendChild(this.element);
-//     if (withFood) {
-//       setTimeout(() => this.element.remove(), 25000);
-//     } else {
-//       setTimeout(() => this.element.remove(), 10000);
-//     }
-//   }
-// }
-
 class Path {
   constructor({ x: x1, y: y1 }, { x: x2, y: y2 }, withFood, notExclude) {
     this.startX = x1;
@@ -267,9 +263,9 @@ class Path {
     document.body.appendChild(this.pathElement);
     if (!notExclude) {
       if (withFood) {
-        setTimeout(() => this.pathElement.remove(), 25000);
+        setTimeout(() => this.pathElement.remove(), 30000);
       } else {
-        setTimeout(() => this.pathElement.remove(), 10000);
+        setTimeout(() => this.pathElement.remove(), 30000);
       }
     }
   }
@@ -306,15 +302,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const anthill = new Anthill();
 
   // Create 5 ants with the anthill as a dependency
-  for (let i = 0; i < 35; i++) {
+  for (let i = 0; i < 5; i++) {
     new Ant(anthill);
   }
   // Create food
-  // const food = new Food();
-  const path1 = new Path({ x: 100, y: 150 }, { x: 100, y: 600 }, true, true);
-  const path21 = new Path({ x: 100, y: 600 }, { x: 300, y: 700 }, true, true);
-  const path22 = new Path({ x: 300, y: 700 }, { x: 500, y: 600 }, true, true);
-  const path3 = new Path({ x: 500, y: 600 }, { x: 500, y: 150 }, true, true);
-  const path41 = new Path({ x: 300, y: 50 }, { x: 100, y: 150 }, true, true);
-  const path42 = new Path({ x: 500, y: 150 }, { x: 300, y: 50 }, true, true);
+  const food = new Food();
 });
