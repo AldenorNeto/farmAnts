@@ -1,0 +1,11 @@
+[package]
+name = "farm-ant"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+yew = { git = "https://github.com/yewstack/yew/", features = ["csr"] }
+
+[serve]
+address = "127.0.0.1"
+port = 8000

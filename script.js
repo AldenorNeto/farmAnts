@@ -167,9 +167,6 @@ class Ant {
       console.log("A formiga está sobreposta ao formigueiro!");
       this.withFood = false;
       setTimeout(() => this.rotate(1), 1);
-      setTimeout(() => this.rotate(1), 1);
-      setTimeout(() => this.rotate(1), 1);
-      setTimeout(() => this.rotate(1), 1);
     }
 
     // Check if the ant is overlapping the food
@@ -177,9 +174,6 @@ class Ant {
     if ((foodBelow.sens1 || foodBelow.sens2) && !this.withFood) {
       console.log("A formiga está sobreposta à comida!");
       this.withFood = true;
-      setTimeout(() => this.rotate(1), 1);
-      setTimeout(() => this.rotate(1), 1);
-      setTimeout(() => this.rotate(1), 1);
       setTimeout(() => this.rotate(1), 1);
     }
     // Checks if the ant is overlapping a trail
@@ -213,16 +207,13 @@ class Anthill {
   constructor() {
     this.element = document.createElement("div");
     this.element.className = "anthill";
+    this.position = { x: 0, y: 0 };
     this.setPosition();
     document.body.appendChild(this.element);
   }
 
   getPosition() {
-    const rect = this.element.getBoundingClientRect();
-    return {
-      x: rect.left,
-      y: rect.top,
-    };
+    return { ...this.position };
   }
 
   setPosition() {
@@ -230,6 +221,9 @@ class Anthill {
     const maxY = window.innerHeight - 40;
     const randomX = Math.floor(Math.random() * maxX);
     const randomY = Math.floor(Math.random() * maxY);
+
+    this.position = { x: randomX, y: randomY };
+
     this.element.style.left = `${randomX}px`;
     this.element.style.top = `${randomY}px`;
   }
